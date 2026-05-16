@@ -4,3 +4,4 @@
 __pycache__/
 train-00000-of-00002-6cff4c59f91661c3.parquet
 train-00000-of-00002-6cff4c59f91661c3.parquet
+.env
