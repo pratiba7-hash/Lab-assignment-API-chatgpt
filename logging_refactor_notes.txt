@@ -1,0 +1,31 @@
+Logging Refactor Notes
+======================
+
+What we changed
+--------------
+1. Added a module-level logger for the refactored script.
+2. Added `setup_logging()` to configure timestamped log output.
+3. Replaced dataset progress and retry `print()` calls with `logging` calls.
+4. Logged validation, file, and runtime errors with clear severity levels.
+5. Added debug logging for request preparation and retry attempts.
+
+Why we changed it
+-----------------
+1. `print()` is fine for quick scripts, but it is weak for debugging and monitoring.
+2. Logging gives structured severity levels such as `info`, `warning`, `error`, and `debug`.
+3. Logs make it easier to trace failures in retries, data loading, and request creation.
+4. Timestamped logs help when you need to understand what happened during a run.
+
+How we changed it
+-----------------
+1. Created `logger = logging.getLogger(__name__)` near the top of the file.
+2. Added `setup_logging()` to call `logging.basicConfig()` with a consistent format.
+3. Updated `load_dataset_from_huggingface()` to log dataset load start, success, and fallback warnings.
+4. Updated `execute_with_retry()` to log debug, warning, and exception details during retry flow.
+5. Updated `generate_first_product_listing()` and `main()` to log the main lifecycle and errors.
+
+Result
+------
+1. The script now emits more useful runtime information for debugging.
+2. Monitoring is easier because important events and failures have log levels.
+3. The code is still simple to run from the command line.

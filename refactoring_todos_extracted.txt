@@ -1,0 +1,37 @@
+Refactoring TODO Extract
+========================
+
+This document pulls the in-file TODOs into one place for easier planning.
+
+1. Move configuration into a dedicated settings module.
+   - What: Extract model name, retry values, dataset name, and paths into config.
+   - Why: Keeps constants centralized and easier to change.
+   - How: Use a settings dataclass or environment-backed config loader.
+
+2. Add a backup model fallback.
+   - What: Try a secondary model if the primary model fails.
+   - Why: Improves resilience when the main model is unavailable.
+   - How: Define a model list and attempt them in order before failing.
+
+3. Add automated tests.
+   - What: Test prompt generation, retry behavior, and missing-file handling.
+   - Why: Prevents regressions during future refactors.
+   - How: Use `pytest` and mock the OpenAI client.
+
+4. Add stronger typing to the retry wrapper.
+   - What: Type the callable and return value for `execute_with_retry()`.
+   - Why: Makes the helper safer and easier to reuse.
+   - How: Use `Callable[..., T]` with a generic type parameter.
+
+5. Validate the model response as JSON.
+   - What: Parse the returned text and verify it matches the expected schema.
+   - Why: The prompt asks for JSON, but the code currently trusts `output_text`.
+   - How: Use `json.loads()` and validate required keys before returning.
+
+Current priority order
+----------------------
+1. Backup model fallback.
+2. JSON response validation.
+3. Automated tests.
+4. Configuration extraction.
+5. Stronger typing for retry helper.

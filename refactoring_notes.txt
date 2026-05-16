@@ -1,0 +1,56 @@
+Product Generator Refactor Notes
+================================
+
+What we changed
+--------------
+1. Split the original script into smaller functions with one responsibility each.
+2. Replaced repeated image encoding logic with a single helper function.
+3. Moved the product prompt into a reusable template constant.
+4. Added a reusable API wrapper with retry logic for transient OpenAI failures.
+5. Added explicit error handling for missing files, missing API key, empty datasets, and OpenAI request failures.
+6. Added user-facing validation messages so failures are visible instead of being silently swallowed.
+
+Why we changed it
+-----------------
+1. The original script mixed data loading, validation, prompt creation, image encoding, and API calls in the same flow.
+2. That made the script harder to test, harder to read, and harder to change safely.
+3. Repeated code increases the chance of bugs when one copy is updated and another is forgotten.
+4. Hardcoded prompts are difficult to tune or reuse across product types.
+5. API calls can fail transiently because of rate limits, network interruptions, or temporary service errors.
+6. Validation failures and missing files need clear messages so the script can be debugged quickly.
+
+How we changed it
+-----------------
+1. `load_dataset_from_huggingface()` now only handles dataset loading and fallback data creation.
+2. `validate_products_dataframe()` checks the dataset before any API call is made.
+3. `get_image_value()` centralizes image lookup from either `image` or `image_path`.
+4. `encode_image_to_base64()` handles both PIL images and file paths, and raises a clear error if the file does not exist.
+5. `build_product_listing_prompt()` uses `PROMPT_TEMPLATE` instead of embedding the prompt directly in the function body.
+6. `execute_with_retry()` is a reusable wrapper that runs any callable, detects retryable exception types, and retries with exponential backoff.
+7. `call_openai()` now prepares the request payload and passes the actual API call through the retry wrapper.
+8. `main()` catches and prints validation, file, and runtime errors so they are visible in the console.
+
+Retry execution flow
+--------------------
+1. The image is encoded once before the API request is made.
+2. The wrapper executes the OpenAI call inside a small retry loop.
+3. If the failure looks transient, the wrapper waits for a short delay and retries with exponential backoff.
+4. If the failure is not retryable, or retries are exhausted, the wrapper raises a clear runtime error with context.
+5. This keeps the retry behavior reusable for future API calls without duplicating logic.
+
+Refactoring checklist
+---------------------
+- [x] Function that did too much: split into loading, validation, prompt building, encoding, and API call helpers.
+- [x] Error handling missing: added explicit handling for API key, file, validation, runtime, and retryable API errors.
+- [x] Repeated code: merged duplicate image encoding logic into one helper.
+- [x] Hardcoded prompt: moved to a reusable template constant.
+- [x] No error message when file not found: now raises and prints a clear file error.
+- [x] Validation errors caught but not shown: now surfaced in `main()` with readable messages.
+- [x] Reusable API wrapper: added `execute_with_retry()` with transient error detection and exponential backoff.
+
+Priority order
+--------------
+1. File and validation error handling, because it prevents silent failures.
+2. Reusable API retries, because it improves resilience against temporary OpenAI/network failures.
+3. Removing repeated code and hardcoded prompt text, because it improves maintainability.
+4. Splitting responsibilities into smaller functions, because it makes future changes safer.
